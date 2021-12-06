@@ -48,3 +48,45 @@ epsilon = sum(2 ** (12 - (n+1)) for n in set(range(12)) - set([0, 3, 4, 5, 7, 8]
 print(f"{gamma=}")
 
 print(gamma * epsilon)
+
+# Now for part 2
+# Gonna do a non optimal approach to get the data i want
+# Rather than use a binary search tree, I'm going to fill a dict with:
+# prefix -> list of words with that prefix
+# This structure will allow me to more easily query things,
+# and may be very space inefficient, but can be built in one pass,
+# so it should be fast enough.
+def prefix_gen(word):
+    for i in range(1, len(word) + 1):
+        yield word[:i]
+
+prefix_lookup = defaultdict(list)
+for word in lines:
+    word = word.rstrip('\n') # could have done this earlier, made a words list
+    prefix_lookup[''].append(word)
+    for prefix in prefix_gen(word):
+        prefix_lookup[prefix].append(word)
+
+def bit_criteria(candidates, position, preference='1'):
+    print(position)
+    bits = [int(word[position]) for word in candidates]
+    # This may be unneccessary
+    if len(candidates) == 1:
+        return candidates[0][position]
+    if sum(bits) >= 0.5 * len(candidates):
+        return preference
+    else:
+        return '0' if preference == '1' else '1'
+
+# First round:
+# 1. Select a preference; 1 for oxygen, 0 for co2
+# 2. find the next bit in the prefix by doing bit_criteria(prefix_lookup[result_word], 0, pref)
+# 3. add this to result_word
+bit_per_word = 12 # it was 12 cause before it was counting the newline...... that may be why part 1 broke
+for preference, name in zip(['0', '1'], ['co2', 'oxygen']):
+    result_word = ''
+    for position in range(bit_per_word):
+        candidates = prefix_lookup[result_word]
+        next_bit = bit_criteria(candidates, position, preference)
+        result_word = result_word + next_bit
+    print(name, result_word, int(result_word, base=2))
